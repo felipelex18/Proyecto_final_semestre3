@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar sesión · Sistema de Gestión de Inventario</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-body">
+    <main class="login">
+        <section class="login__card" aria-labelledby="loginTitle">
+            <!-- TODO: reemplazar por el logo en assets/ cuando el equipo lo defina -->
+            <div class="brand__logo login__logo" aria-hidden="true">MS</div>
+            <h1 id="loginTitle">Iniciar sesión</h1>
+            <p class="muted">Sistema de Gestión de Inventario · MAGNUSSIG SAS</p>
+
+            <div class="alert" id="loginError" role="alert" hidden></div>
+
+            <form id="loginForm" novalidate>
+                <div class="field">
+                    <label for="loginUser">Usuario o correo</label>
+                    <input id="loginUser" name="usuario" type="text" autocomplete="username" required aria-describedby="loginUserError">
+                    <p class="field__error" id="loginUserError" hidden></p>
+                </div>
+
+                <div class="field">
+                    <label for="loginPassword">Contraseña</label>
+                    <div class="field__password">
+                        <input id="loginPassword" name="password" type="password" autocomplete="current-password" required aria-describedby="loginPasswordError">
+                        <button type="button" class="field__toggle" id="togglePassword" aria-label="Mostrar contraseña" aria-pressed="false">Mostrar</button>
+                    </div>
+                    <p class="field__error" id="loginPasswordError" hidden></p>
+                </div>
+
+                <button class="btn btn--primary login__submit" id="loginSubmit" type="submit">Ingresar</button>
+            </form>
+        </section>
+    </main>
+    <script src="js/login.js"></script>
+</body>
+</html>
