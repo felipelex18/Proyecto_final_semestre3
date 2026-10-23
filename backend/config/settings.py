@@ -10,17 +10,27 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
+import os
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Variables de entorno (credenciales) desde backend/.env  -> NO se sube a GitHub
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-jb0=&9h9j-58s#0=5fz%sed#5ta1m%con#ust%xx$1n))eh(zd'
+# Si existe SECRET_KEY en el .env se usa esa; si no, esta clave solo para desarrollo.
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-jb0=&9h9j-58s#0=5fz%sed#5ta1m%con#ust%xx$1n))eh(zd',
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -37,9 +47,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    # Terceros
+    'rest_framework',
+    'rest_framework.authtoken',
+    'corsheaders',
+    # Aplicación del proyecto
+    'inventario',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # debe ir primero
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,6 +88,8 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
+# Por defecto usa SQLite. Para usar MySQL, agrega DB_ENGINE=mysql en el .env
+# junto con DB_NAME, DB_USER, DB_PASSWORD, DB_HOST y DB_PORT.
 
 DATABASES = {
     'default': {
@@ -78,6 +97,18 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
+
+if os.getenv('DB_ENGINE') == 'mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '3306'),
+        }
+    }
 
 
 # Password validation
@@ -102,9 +133,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 
@@ -127,32 +158,24 @@ MAILERS = {
 }
 
 
-# ---- Configuracion del proyecto ----
-import os
-from dotenv import load_dotenv
+# API (Django REST Framework)
+# Con API_REQUIRE_AUTH=True en el .env, todos los endpoints exigen iniciar sesion
+# (cabecera "Authorization: Token <token>"). Por defecto esta en False para
+# poder desarrollar y probar sin login.
+API_REQUIRE_AUTH = os.getenv('API_REQUIRE_AUTH', 'False').lower() in ('1', 'true', 'yes')
 
-load_dotenv(BASE_DIR / '.env')
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated'
+        if API_REQUIRE_AUTH
+        else 'rest_framework.permissions.AllowAny'
+    ],
+}
 
-INSTALLED_APPS += [
-    'rest_framework',
-    'corsheaders',
-    'inventario',
-]
 
-MIDDLEWARE.insert(0, 'corsheaders.middleware.CorsMiddleware')
-
-if os.getenv('DB_ENGINE') == 'mysql':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.getenv('DB_NAME'),
-            'USER': os.getenv('DB_USER'),
-            'PASSWORD': os.getenv('DB_PASSWORD'),
-            'HOST': os.getenv('DB_HOST'),
-            'PORT': os.getenv('DB_PORT'),
-        }
-    }
-
+# CORS: permite que el frontend (otro origen) consuma la API. Solo para desarrollo.
 CORS_ALLOW_ALL_ORIGINS = True
-LANGUAGE_CODE = 'es'
-TIME_ZONE = 'America/Bogota'
